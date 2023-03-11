@@ -1,4 +1,5 @@
 import pygame, sys
+from random import randint
 
 def display_score():
     #.get_ticks()返回毫秒值
@@ -8,6 +9,17 @@ def display_score():
     screen.blit(score_surface,score_rect)
 
     return current_time
+
+def obstacle_movement(obstacle_list):
+    if obstacle_list:
+        for obstacle_rect in obstacle_list:
+            obstacle_rect.x -= 5
+
+            screen.blit(snail_surface,obstacle_rect)
+
+        return obstacle_list
+    else:
+        return []
 
 pygame.init()  #初始化运行pygame，此函数必须执行
 screen = pygame.display.set_mode((800,400))  #创建游戏窗口
@@ -32,6 +44,8 @@ ground_surface = pygame.image.load('graphics/ground.png').convert()
 snail_surface = pygame.image.load('graphics/snail/snail1.png').convert_alpha()
 snail_rect = snail_surface.get_rect(bottomleft=(800,300))  #给snail确定边框
 
+obstacle_rect_list = []
+
 player_surface = pygame.image.load('graphics/player/player_walk_1.png').convert_alpha()
 player_rect = player_surface.get_rect(midbottom=(80,300))  #给人物确定边框
 player_gravity = 0
@@ -46,6 +60,10 @@ game_name = score_font.render('Pixel Runner',False,(111,196,169))
 game_name_rect = game_name.get_rect(center=(400,80))
 game_message = score_font.render('Press space to run',False,(111,196,169))
 game_message_rect = game_message.get_rect(center=(400,330))
+
+#timer
+obstacle_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(obstacle_timer,1500)
 
 while True:  #保持游戏始终运行
     for event in pygame.event.get():  #获取玩家操作
@@ -65,6 +83,9 @@ while True:  #保持游戏始终运行
                 snail_rect.left = 800  #初始化snail的位置
                 start_time = int(pygame.time.get_ticks()/1000)  #分数归零
 
+        if event.type == obstacle_timer and game_active:
+            obstacle_rect_list.append(snail_surface.get_rect(bottomleft=(randint(900,1100),300)))
+
     if game_active:
         #层面是可按加载顺序向上叠加的
         screen.blit(sky_surface,(0,0))  #让层面展现到窗口中,左上角为origin
@@ -75,10 +96,10 @@ while True:  #保持游戏始终运行
         score = display_score()
 
         #怪物
-        snail_rect.left -= 4  #让snail向左以每秒3个pixel的距离移动
-        if snail_rect.right < -100:
-            snail_rect.left = 800
-        screen.blit(snail_surface,snail_rect)
+        # snail_rect.left -= 4  #让snail向左以每秒3个pixel的距离移动
+        # if snail_rect.right < -100:
+        #     snail_rect.left = 800
+        # screen.blit(snail_surface,snail_rect)
 
         #玩家
         player_gravity += 0.8
@@ -86,6 +107,9 @@ while True:  #保持游戏始终运行
         if player_rect.bottom >= 300:  #让人物停落在地面上
             player_rect.bottom = 300
         screen.blit(player_surface,player_rect)
+
+        #obstacle movement
+        obstacle_rect_list = obstacle_movement(obstacle_rect_list)
 
         #game over state
         if snail_rect.colliderect(player_rect):
